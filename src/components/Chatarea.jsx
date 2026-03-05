@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useCallback } from 'react'
 import { Hash, Users, Bell, Pin, Search, Phone, Video, MoreVertical, Wifi, WifiOff } from 'lucide-react'
 import MessageBubble, { TypingIndicator, DateDivider } from './MessageBubble'
-import ChatInput from './ChatInput'
+import ChatInput from './Chatinput'
 import { useStore } from '../store'
-import { shouldGroupMessage, generateId } from '../utils'
+import { shouldGroupMessage, generateId } from '../util'
 
 function formatDateLabel(date) {
   const d = new Date(date)

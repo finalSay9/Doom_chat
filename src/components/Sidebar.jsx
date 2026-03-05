@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Hash, MessageCircle, Plus, Settings, Search, ChevronDown, Zap } from 'lucide-react'
 import Avatar from './Avatar'
 import { useStore } from '../store'
-import { formatDate, truncate } from '../utils'
+import { formatDate, truncate } from '../util'
 
 function RoomItem({ room, active, onClick }) {
   const isChannel = room.type === 'channel'

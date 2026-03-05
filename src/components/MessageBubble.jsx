@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Check, CheckCheck, Trash2, MoreHorizontal } from 'lucide-react'
 import Avatar from './Avatar'
-import { formatTime } from '../utils'
+import { formatTime } from '../util'
 
 export default function MessageBubble({ msg, isOwn, grouped, style }) {
   const [hovered, setHovered] = useState(false)
