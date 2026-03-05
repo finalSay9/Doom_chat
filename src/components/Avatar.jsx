@@ -1,5 +1,5 @@
 import React from 'react'
-import { getInitials, getAvatarColor } from '../utils'
+import { getInitials, getAvatarColor } from '../util'
 
 export default function Avatar({ name = '', size = 36, status, style = {} }) {
   const bg = getAvatarColor(name)
