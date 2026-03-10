@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Zap, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { auth } from '../api'
 
 export default function Login({ onLogin }) {
   const [mode, setMode] = useState('login') // 'login' | 'register'
@@ -11,14 +12,27 @@ export default function Login({ onLogin }) {
   const update = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = async () => {
+    if (!form.username.trim() || !form.password.trim()) {
+      setError('Username and password are required')
+      return
+    }
     setError('')
     setLoading(true)
     try {
-      // TODO: Replace with real API call
-      // const res = await auth.login(form.username, form.password)
-      // localStorage.setItem('token', res.access_token)
-      await new Promise(r => setTimeout(r, 800)) // demo delay
-      onLogin({ username: form.username, displayName: form.displayName || form.username })
+      let res
+      if (mode === 'login') {
+        res = await auth.login(form.username, form.password)
+      } else {
+        if (!form.displayName.trim()) { setError('Display name is required'); setLoading(false); return }
+        res = await auth.register({
+          username: form.username,
+          password: form.password,
+          display_name: form.displayName,   // backend expects snake_case
+        })
+      }
+      // Store JWT then let App fetch /users/me
+      localStorage.setItem('token', res.access_token)
+      onLogin(res.access_token)
     } catch (e) {
       setError(e.message || 'Something went wrong')
     } finally {

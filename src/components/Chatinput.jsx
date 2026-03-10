@@ -3,7 +3,7 @@ import { Send, Paperclip, Smile, Mic } from 'lucide-react'
 
 const EMOJIS = ['😀','😂','😍','🤔','👍','❤️','🔥','🎉','😎','🙌','💯','⚡']
 
-export default function ChatInput({ onSend, roomName, disabled }) {
+export default function ChatInput({ onSend, onTyping, roomName, disabled }) {
   const [value, setValue] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
   const [focused, setFocused] = useState(false)
@@ -27,6 +27,7 @@ export default function ChatInput({ onSend, roomName, disabled }) {
 
   const handleInput = (e) => {
     setValue(e.target.value)
+    onTyping?.()
     // Auto-resize
     const ta = textareaRef.current
     if (ta) {
