@@ -1,7 +1,7 @@
 const BASE_URL = '/api'
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000'
+const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8000'
 
-// ─── HTTP helpers ────────────────────────────────────────────────────────────
+// ─── HTTP core ───────────────────────────────────────────────────────────────
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('token')
@@ -17,19 +17,25 @@ async function request(path, options = {}) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(err.detail || 'Request failed')
   }
+  if (res.status === 204) return null
   return res.json()
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ─── Auth — POST /users/register  POST /users/login  GET /users/me ───────────
 
 export const auth = {
+  register: ({ username, password, display_name }) =>
+    request('/users/register', {
+      method: 'POST',
+      body: JSON.stringify({ username, password, display_name }),
+    }),
+
   login: (username, password) =>
-    request('/auth/login', {
+    request('/users/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     }),
-  register: (data) =>
-    request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+
   me: () => request('/users/me'),
 }
 
@@ -44,7 +50,7 @@ export const rooms = {
   members: (id) => request(`/rooms/${id}/members`),
 }
 
-// ─── Messages ────────────────────────────────────────────────────────────────
+// ─── Messages — returns { messages, total, has_more } ────────────────────────
 
 export const messages = {
   list: (roomId, params = {}) => {
@@ -60,36 +66,36 @@ export const messages = {
     request(`/rooms/${roomId}/messages/${msgId}`, { method: 'DELETE' }),
 }
 
-// ─── Users ───────────────────────────────────────────────────────────────────
+// ─── Users ────────────────────────────────────────────────────────────────────
 
 export const users = {
   list: () => request('/users'),
   get: (id) => request(`/users/${id}`),
   updateStatus: (status) =>
     request('/users/me/status', { method: 'PATCH', body: JSON.stringify({ status }) }),
+  updateMe: (data) =>
+    request('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
 }
 
-// ─── WebSocket ───────────────────────────────────────────────────────────────
+// ─── WebSocket — ws://host/ws/rooms/{id}?token=<jwt> ─────────────────────────
 
 export function createWebSocket(roomId, handlers = {}) {
   const token = localStorage.getItem('token')
-  const ws = new WebSocket(`${WS_URL}/ws/rooms/${roomId}?token=${token}`)
+  const ws = new WebSocket(`${WS_BASE}/ws/rooms/${roomId}?token=${token}`)
 
   ws.onopen = () => handlers.onOpen?.()
   ws.onclose = (e) => handlers.onClose?.(e)
   ws.onerror = (e) => handlers.onError?.(e)
   ws.onmessage = (e) => {
-    try {
-      const data = JSON.parse(e.data)
-      handlers.onMessage?.(data)
-    } catch {
-      handlers.onRaw?.(e.data)
-    }
+    try { handlers.onMessage?.(JSON.parse(e.data)) }
+    catch { handlers.onRaw?.(e.data) }
   }
 
   return {
-    send: (data) => ws.send(JSON.stringify(data)),
-    sendRaw: (data) => ws.send(data),
+    // Backend expects: { type: "message", content: "..." }
+    sendMessage: (content) => ws.send(JSON.stringify({ type: 'message', content })),
+    // Backend expects: { type: "typing", is_typing: true/false }
+    sendTyping: (is_typing) => ws.send(JSON.stringify({ type: 'typing', is_typing })),
     close: () => ws.close(),
     ws,
   }
